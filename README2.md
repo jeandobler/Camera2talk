@@ -1,25 +1,13 @@
-
-
-
 O que vamos fazer
 Configurar a camera com SufaceView e TextureView
-
 
 
 Com o que e
 como vamos fazer
 
-
-
-
-
 Surfaceview
-
 TextureView
-
 mImageReader
-
-
 
 Vamos começar com o SUrfaceview
 
@@ -54,25 +42,20 @@ Vision 19.03( Sem firebase )
     - Função
     - Usando TextureView
 
-
-
 CameraX com MlKit  // 27/04
 
 
-# Motivos
-A câmera do celular pode ser considerado como um dos itens mais populares para os usuários em geral
-e também é um dos periféricos que é mais levado em conta para que o usuário opte por trocar de
-celular. Porém mesmo com toda essa popularidade é raro ter a oportunidade de pegar alguma
-Task para implementar a câmera.
-
-
+# Intro
+O que seria dos dias atuais sem a camera do celular? Este item pode ser considerado como um dos mais populares para qualquer usuario,
+alias, todos gostam de registrar seus momentos favoritos e essa popularidade é exponencialmente intensificada
+se considerarmos  a facilidade que os aplicativos do celular dão para o compartilhamento e armazenamento de videos e fotos.
+Mesmo com toda essa popularidade é raro ter a oportunidade de pegar alguma Task para implementar a câmera.
 
 # O que vamos fazer
-Neste artigo iremos aplica a API CAMERA2 do android usando SurfaceView, TextureView e ImageReader,
-estes itens possuem características diferentes em processamento e visualização
+Neste artigo iremos aplicar a API CAMERA2 do android usando SurfaceView, TextureView e ImageReader,
+estas views possuem características diferentes que iremos explicar separadamente.
 
-
-#Mão na massa
+# Mão na massa
 Primeiro vamos intender o que precisa ser feito para que consigamos abrir a camera e
 realizar as tarefaz necessárias nela.
 

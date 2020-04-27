@@ -2,16 +2,19 @@ package com.dobler.camera2talk
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.os.Bundle
 import android.os.Handler
+import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Surface
 import android.view.TextureView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_with_texture.*
+
 
 class CameraWithTextureActivity : AppCompatActivity() {
 
@@ -43,15 +46,13 @@ class CameraWithTextureActivity : AppCompatActivity() {
             width: Int,
             height: Int
         ) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
         override fun onSurfaceTextureUpdated(surface: SurfaceTexture?) {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
 
         override fun onSurfaceTextureDestroyed(surface: SurfaceTexture?): Boolean {
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            return true
         }
 
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
@@ -93,14 +94,25 @@ class CameraWithTextureActivity : AppCompatActivity() {
             if (cameraDevice != null) {
                 currentCameraDevice = cameraDevice
             }
+            cameraCharacteristics[CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP]?.let { streamConfigurationMap ->
+                streamConfigurationMap.getOutputSizes(ImageFormat.YUV_420_888)
+                    ?.let { yuvSizes ->
+                        val previewSize = yuvSizes.first()
 
-            previewSurface = Surface(camera.surfaceTexture)
+                        camera.surfaceTexture.setDefaultBufferSize(
+                            previewSize.width, previewSize.height
+                        )
+                        adaptScreen()
+                        previewSurface = Surface(camera.surfaceTexture)
 
-            cameraDevice.createCaptureSession(
-                mutableListOf(previewSurface),
-                captureCallback,
-                Handler { true }
-            )
+                        cameraDevice.createCaptureSession(
+                            mutableListOf(previewSurface),
+                            captureCallback,
+                            Handler { true }
+                        )
+
+                    }
+            }
         }
 
         override fun onDisconnected(camera: CameraDevice) {
@@ -110,6 +122,29 @@ class CameraWithTextureActivity : AppCompatActivity() {
         }
     }
 
+    fun adaptScreen() {
+        val cameraAspectRatio = 0.75.toFloat()
+
+        val metrics = DisplayMetrics()
+        windowManager.defaultDisplay.getMetrics(metrics)
+        val screenWidth = metrics.widthPixels
+        val screenHeight = metrics.heightPixels
+        var finalWidth = screenWidth
+        var finalHeight = screenHeight
+        val screenAspectRatio = screenWidth.toFloat() / screenHeight
+
+        if (screenAspectRatio > cameraAspectRatio) {
+            finalHeight = (screenWidth / cameraAspectRatio).toInt()
+        } else {
+            finalWidth = (screenHeight * cameraAspectRatio).toInt()
+        }
+
+        val lp = camera.layoutParams
+
+        lp.width = finalWidth
+        lp.height = finalHeight
+        camera.setLayoutParams(lp)
+    }
 
     val captureCallback = object : CameraCaptureSession.StateCallback() {
         override fun onConfigureFailed(session: CameraCaptureSession) {}
