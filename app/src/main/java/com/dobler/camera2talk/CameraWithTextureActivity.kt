@@ -75,12 +75,12 @@ class CameraWithTextureActivity : AppCompatActivity() {
         if (cameraManager.cameraIdList.isEmpty()) {
             return
         }
-        for (foundCamera in cameraManager.cameraIdList) {
 
+        cameraManager.cameraIdList.forEach { foundCamera ->
             cameraCharacteristics = cameraManager.getCameraCharacteristics(foundCamera)
 
             if (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_BACK) {
-                backCamera = cameraManager.cameraIdList[0]
+                backCamera = foundCamera
             }
         }
     }
