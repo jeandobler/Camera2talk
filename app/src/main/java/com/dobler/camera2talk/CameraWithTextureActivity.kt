@@ -1,6 +1,7 @@
 package com.dobler.camera2talk
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.graphics.ImageFormat
 import android.graphics.SurfaceTexture
@@ -10,12 +11,11 @@ import android.os.Handler
 import android.util.DisplayMetrics
 import android.view.Surface
 import android.view.TextureView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import kotlinx.android.synthetic.main.activity_with_texture.*
 
 
-class CameraWithTextureActivity : AppCompatActivity() {
+class CameraWithTextureActivity : BaseActivity() {
 
 //    private lateinit var previewSurface: Surface //Apenas se usar TextureView
 
@@ -26,11 +26,12 @@ class CameraWithTextureActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_with_texture)
+        initCameraPermission()
         setupManagers()
         startCamera()
     }
 
-    private fun startCamera() {
+    override fun startCamera() {
         cameraView.setSurfaceTextureListener(surfaceReadyCallback)
     }
 
@@ -55,16 +56,10 @@ class CameraWithTextureActivity : AppCompatActivity() {
             return true
         }
 
+        @SuppressLint("MissingPermission")
         override fun onSurfaceTextureAvailable(surface: SurfaceTexture?, width: Int, height: Int) {
             getBackCamera()
 
-            if (ActivityCompat.checkSelfPermission(
-                    this@CameraWithTextureActivity,
-                    Manifest.permission.CAMERA
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                return
-            }
 
             cameraManager.openCamera(backCamera, stateCallback, Handler { true })
         }

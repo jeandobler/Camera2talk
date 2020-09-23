@@ -1,4 +1,4 @@
-package com.dobler.camera2talk
+package com.dobler.camera2talk.extras
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.SurfaceHolder
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.dobler.camera2talk.R
 import kotlinx.android.synthetic.main.activity_with_surface.*
 
 class CameraWithSurfaceActivity : AppCompatActivity() {

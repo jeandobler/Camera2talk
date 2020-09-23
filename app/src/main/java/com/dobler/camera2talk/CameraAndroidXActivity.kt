@@ -1,129 +1,99 @@
 package com.dobler.camera2talk
 
-import android.Manifest
-import android.content.pm.PackageManager
 import android.os.Bundle
-import android.util.Size
-import android.view.Surface
-import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraX
-import androidx.camera.core.Preview
-import androidx.camera.core.PreviewConfig
-import androidx.core.app.ActivityCompat
+import androidx.camera.core.*
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_with_camerax.*
+import java.nio.ByteBuffer
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-private const val REQUEST_CODE_PERMISSIONS = 10
-private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 
-class CameraAndroidXActivity : AppCompatActivity() {
+class CameraAndroidXActivity : BaseActivity() {
+    private var imageCapture: ImageCapture? = null
 
+    private lateinit var cameraExecutor: ExecutorService
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_with_camerax)
 
+        initCameraPermission()
+        startCamera()
 
-        // Request camera permissions
-        if (allPermissionsGranted()) {
-            camera.post { startCamera() }
-        } else {
-            ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
-        }
+        // Set up the listener for take photo button
+//        camera_capture_button.setOnClickListener { takePhoto() }
 
-
-        // Every time the provided texture view changes, recompute layout
-        camera.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-            updateTransform()
-        }
+        cameraExecutor = Executors.newSingleThreadExecutor()
 
     }
 
 
-    // Add this after onCreate
+    override fun startCamera() {
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+        cameraProviderFuture.addListener(Runnable {
+            // Used to bind the lifecycle of cameras to the lifecycle owner
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+            // Preview
+            val preview = Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(viewFinder.createSurfaceProvider())
+                }
 
-    private val executor = Executors.newSingleThreadExecutor()
+            val imageAnalyzer = ImageAnalysis.Builder()
+                .build()
+                .also {
+                    it.setAnalyzer(cameraExecutor, QrCodeAnalyzer {
+//                        Log.d(TAG, "Average luminosity: $luma")
+                    })
+                }
 
-    private fun startCamera() {
 
-        // Create configuration object for the viewfinder use case
-        val previewConfig = PreviewConfig.Builder().apply {
-            setTargetResolution(Size(640, 480))
-        }.build()
+            // Select back camera as a default
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll()
+                // Bind use cases to camera
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview
+                )
 
-
-        // Build the viewfinder use case
-        val preview = Preview(previewConfig)
-
-        // Every time the viewfinder is updated, recompute layout
-        preview.setOnPreviewOutputUpdateListener {
-
-            // To update the SurfaceTexture, we have to remove it and re-add it
-            val parent = camera.parent as ViewGroup
-            parent.removeView(camera)
-            parent.addView(camera, 0)
-
-            camera.surfaceTexture = it.surfaceTexture
-            updateTransform()
-        }
-
-        // Bind use cases to lifecycle
-        // If Android Studio complains about "this" being not a LifecycleOwner
-        // try rebuilding the project or updating the appcompat dependency to
-        // version 1.1.0 or higher.
-        CameraX.bindToLifecycle(this, preview)
-    }
-
-    private fun updateTransform() {
-        val matrix = android.graphics.Matrix()
-
-        // Compute the center of the view finder
-        val centerX = camera.width / 2f
-        val centerY = camera.height / 2f
-
-        // Correct preview output to account for display rotation
-        val rotationDegrees = when (camera.display.rotation) {
-            Surface.ROTATION_0 -> 0
-            Surface.ROTATION_90 -> 90
-            Surface.ROTATION_180 -> 180
-            Surface.ROTATION_270 -> 270
-            else -> return
-        }
-        matrix.postRotate(-rotationDegrees.toFloat(), centerX, centerY)
-
-        // Finally, apply transformations to our TextureView
-        camera.setTransform(matrix)
-    }
-
-    /**
-     * Process result from permission request dialog box, has the request
-     * been granted? If yes, start Camera. Otherwise display a toast
-     */
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults: IntArray
-    ) {
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                camera.post { startCamera() }
-            } else {
-
-                finish()
+            } catch (exc: Exception) {
             }
-        }
+
+        }, ContextCompat.getMainExecutor(this))
     }
 
-    /**
-     * Check if all permission specified in the manifest have been granted
-     */
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
-        ContextCompat.checkSelfPermission(
-            baseContext, it
-        ) == PackageManager.PERMISSION_GRANTED
+    override fun onDestroy() {
+        super.onDestroy()
+        cameraExecutor.shutdown()
     }
 
+
+}
+
+private class QrCodeAnalyzer(luma : () -> Unit) : ImageAnalysis.Analyzer {
+
+    private fun ByteBuffer.toByteArray(): ByteArray {
+        rewind()    // Rewind the buffer to zero
+        val data = ByteArray(remaining())
+        get(data)   // Copy the buffer into a byte array
+        return data // Return the byte array
+    }
+
+    override fun analyze(image: ImageProxy) {
+
+        val buffer = image.planes[0].buffer
+        val data = buffer.toByteArray()
+        val pixels = data.map { it.toInt() and 0xFF }
+        val luma = pixels.average()
+
+//        listener(luma)
+
+        image.close()
+    }
 }

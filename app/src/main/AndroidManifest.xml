@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="com.dobler.camera2talk">
 
+    <uses-feature android:name="android.hardware.camera.any" />
     <uses-permission android:name="android.permission.CAMERA" />
 
     <application
@@ -12,16 +13,17 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <activity android:name=".CameraWithTextureActivity">
+        <activity android:name=".ChooseActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--        <activity android:name=".CameraWithTextureActivity" />-->
-                <activity android:name=".CameraAndroidXActivity" />
-                <activity android:name=".CameraWithSurfaceActivity" />
+        <!--        <activity android:name=".CameraWithTextureActivity" />-->
+        <activity android:name=".CameraWithTextureActivity" />
+        <activity android:name=".CameraAndroidXActivity" />
+        <activity android:name=".extras.CameraWithSurfaceActivity" />
     </application>
 
 </manifest>
